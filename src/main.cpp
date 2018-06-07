@@ -9,12 +9,14 @@ int main(int argc, char** argv){
   }
   std::string filename = argv[1];
   cv::Mat img = cv::imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
-  img.convertTo(img, CV_32F);
   cv::resize(img, img, cv::Size(256,256));
   cv::Mat rad = cv::sinogram(img, 256);
 
+  cv::Mat compare(img.rows * 2, img.cols * 2, img.type());
+  cv::hconcat(img, rad, compare);
+
   cv::namedWindow("Sinogram", cv::WINDOW_NORMAL);
-  cv::imshow("Sinogram", rad);
+  cv::imshow("Sinogram", compare);
   cv::waitKey(0);
   return 0;
 }

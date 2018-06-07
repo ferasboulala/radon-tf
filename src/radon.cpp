@@ -15,12 +15,10 @@ cv::Mat cv::sinogram(const cv::Mat& src, const int theta_bin){
   const Coord origin = {src.cols/2.0, src.rows/2.0};
   for (int x = 0; x < map.size(); x++){
     for (int y = 0; y < map[x].size(); y++){
-      // Cartesian to polar conversion
       Coord cartesian = {x - origin.first, origin.second - y};
       float r = sqrt(pow(cartesian.first, 2) + pow(cartesian.second, 2));
       float theta = 0.0;
-      if (cartesian.first)
-        theta = atan2(cartesian.second, cartesian.first);
+      theta = atan2(cartesian.second, cartesian.first);
       Coord polar = {r, theta};
       map[x][y] = polar;
     }
@@ -42,6 +40,34 @@ cv::Mat cv::sinogram(const cv::Mat& src, const int theta_bin){
   double min, max;
   cv::minMaxLoc(dst, &min, &max);
   dst = dst/max;
+  int scale = 1;
+  switch(src.type()){
+    case CV_8U : {
+      scale = 255;
+      break;
+    }
+    case CV_8S : {
+      scale = 127;
+      break;
+    }
+    case CV_16U : {
+      scale = 256 * 256 - 1;
+      break;
+    }
+    case CV_16S : {
+      scale = 256 * 256 / - 1;
+      break;
+    }
+    case CV_32S : {
+      scale = 256 * 256 * 256 - 1;
+      break;
+    }
+    case CV_USRTYPE1 : {
+      std::cout << "radon-tf does't support user type scaling." << std::endl;
+      break;
+    }
+  }
+  dst = dst * scale;
   dst.convertTo(dst, src.type());
   return dst;
 }
