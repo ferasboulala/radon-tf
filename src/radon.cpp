@@ -1,8 +1,11 @@
 #include "radon.hpp"
 
-cv::Mat Radon::sinogram(const cv::Mat& src, const int theta_bin){
+cv::Mat cv::sinogram(const cv::Mat& src, const int theta_bin){
   const int p_bin = sqrt(pow(src.rows, 2) + pow(src.cols, 2));
-  cv::Mat dst(theta_bin, p_bin, src.type(), cv::Scalar(0));
+  cv::Mat dst(theta_bin, p_bin, CV_64F, cv::Scalar(0));
+  cv::Mat copy;
+  src.copyTo(copy);
+  copy.convertTo(copy, CV_64F);
 
   Map map;
   map.resize(src.cols); // x
@@ -30,18 +33,27 @@ cv::Mat Radon::sinogram(const cv::Mat& src, const int theta_bin){
       for (int y = 0; y < map[x].size(); y++){
         float x_cart = map[x][y].first * cos(map[x][y].second);
         int bin_idx = floor(x_cart + p_mid);
-        dst.at<float>(i, bin_idx) += src.at<float>(y,x);
+        dst.at<double>(i, bin_idx) += copy.at<double>(y,x);
         map[x][y].second -= d_theta;
       }
     }
   }
+
+  double min, max;
+  cv::minMaxLoc(dst, &min, &max);
+  dst = dst/max;
+  dst.convertTo(dst, src.type());
   return dst;
 }
 
-int Radon::backprojection(const cv::Mat src, std::vector<cv::Mat> dst, const uint res){
+cv::Mat cv::sinogram_p(const cv::Mat& src, const int theta_bin){
 
 }
 
-int Radon::reconstruct(const std::vector<cv::Mat> src, cv::Mat dst){
+int cv::backprojection(const cv::Mat src, std::vector<cv::Mat> dst, const uint res){
+
+}
+
+int cv::reconstruct(const std::vector<cv::Mat> src, cv::Mat dst){
 
 }

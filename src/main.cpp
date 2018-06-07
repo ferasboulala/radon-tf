@@ -11,11 +11,7 @@ int main(int argc, char** argv){
   cv::Mat img = cv::imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
   img.convertTo(img, CV_32F);
   cv::resize(img, img, cv::Size(256,256));
-  cv::Mat rad = Radon::sinogram(img, 256);
-  
-  double min, max;
-  cv::minMaxLoc(rad, &min, &max);
-  rad = rad / max;
+  cv::Mat rad = cv::sinogram(img, 256);
 
   cv::namedWindow("Sinogram", cv::WINDOW_NORMAL);
   cv::imshow("Sinogram", rad);
