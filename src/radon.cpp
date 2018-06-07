@@ -1,6 +1,21 @@
 #include "radon.hpp"
 
-cv::Mat cv::sinogram(const cv::Mat& src, const int theta_bin){
+void cv::sinogram_p(struct thread_data thread){
+  for (int x = 0; x < thread.map->size(); x++){
+    for (int y = 0; y < (*thread.map)[0].size(); y++){
+      float theta = (*thread.map)[x][y].second - thread.start * thread.d_theta;
+      float r = (*thread.map)[x][y].first;
+      for (int i = thread.start; i < thread.end; i++){
+        float x_cart = r * cos(theta);
+        int bin_idx = round(x_cart + thread.p_mid);
+        thread.dst.at<double>(i,bin_idx) += thread.src.at<double>(y,x);
+        theta -= thread.d_theta;
+      }
+    }
+  }
+}
+
+cv::Mat cv::sinogram(const cv::Mat& src, const int theta_bin, const int n_threads){
   const int p_bin = round(sqrt(pow(src.rows, 2) + pow(src.cols, 2)));
   cv::Mat dst(theta_bin, p_bin, CV_64F, cv::Scalar(0));
   cv::Mat copy;
@@ -24,17 +39,28 @@ cv::Mat cv::sinogram(const cv::Mat& src, const int theta_bin){
     }
   }
 
+  // Threading
   const float p_mid = p_bin / 2;
   const float d_theta = M_PI / theta_bin;
-  for (int i = 0; i < theta_bin; i++){
-    for (int x = 0; x < map.size(); x++){
-      for (int y = 0; y < map[x].size(); y++){
-        float x_cart = map[x][y].first * cos(map[x][y].second);
-        int bin_idx = round(x_cart + p_mid);
-        dst.at<double>(i,bin_idx) += copy.at<double>(y,x);
-        map[x][y].second -= d_theta;
-      }
-    }
+  std::vector<std::thread> threads(n_threads);
+  std::vector<struct thread_data> data(n_threads);
+  const int bin_per_thread = theta_bin / n_threads;
+  for (int i = 0; i < n_threads; i++){
+    const int start = i * bin_per_thread;
+    int end = (i + 1) * bin_per_thread;
+    if (i == n_threads - 1)
+      end = theta_bin;
+    data[i].dst     = dst;
+    data[i].src     = copy;
+    data[i].start   = start;
+    data[i].end     = end;
+    data[i].d_theta = d_theta;
+    data[i].p_mid   = p_mid;
+    data[i].map     = &map;
+    threads[i] = std::thread(cv::sinogram_p, std::ref(data[i]));
+  }
+  for (auto it = threads.begin(); it != threads.end(); it++){
+    it->join();
   }
 
   double min, max;
@@ -76,10 +102,6 @@ cv::Mat cv::sinogram(const cv::Mat& src, const int theta_bin){
     dst = dst - offset;
   dst.convertTo(dst, src.type());
   return dst;
-}
-
-cv::Mat cv::sinogram_p(const cv::Mat& src, const int theta_bin){
-
 }
 
 int cv::backprojection(const cv::Mat src, std::vector<cv::Mat> dst, const uint res){
