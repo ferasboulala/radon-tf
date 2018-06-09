@@ -14,7 +14,6 @@ struct thread_data {
 };
 
 // TODO : ADD threading to the reconstruct function
-// TODO : ADD filtering to the reconstruct function
 namespace cv {
   void sinogram_p(struct thread_data thread);
   cv::Mat sinogram(const cv::Mat& src, const int theta_bin, const int n_threads = 1);
