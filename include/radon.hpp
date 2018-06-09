@@ -13,9 +13,11 @@ struct thread_data {
   Map* map;
 };
 
+// TODO : ADD threading to the reconstruct function
+// TODO : ADD filtering to the reconstruct function
 namespace cv {
   void sinogram_p(struct thread_data thread);
   cv::Mat sinogram(const cv::Mat& src, const int theta_bin, const int n_threads = 1);
-  int backprojection(const cv::Mat src, std::vector<cv::Mat> dst, const uint res);
-  int reconstruct(const std::vector<cv::Mat> src, cv::Mat dst);
+  cv::Mat reconstruct(const cv::Mat& src, const cv::Size size);
+  void radon_normalize(cv::Mat& src, const int type, bool sc = true);
 }

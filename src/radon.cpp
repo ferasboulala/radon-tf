@@ -104,10 +104,90 @@ cv::Mat cv::sinogram(const cv::Mat& src, const int theta_bin, const int n_thread
   return dst;
 }
 
-int cv::backprojection(const cv::Mat src, std::vector<cv::Mat> dst, const uint res){
+cv::Mat cv::reconstruct(const cv::Mat& src, const cv::Size size){
+  cv::Mat dst(src.cols, src.cols, CV_64F, cv::Scalar(0));
+  cv::Mat copy;
+  src.copyTo(copy);
+  copy.convertTo(copy, CV_64F);
 
+  Map map;
+  map.resize(src.cols);
+  for (int i = 0; i < map.size(); i++){
+    map[i].resize(src.cols);
+  }
+
+  const Coord origin = {round(src.cols/2.0), round(src.cols/2.0)};
+  for (int x = 0; x < map.size(); x++){
+    for (int y = 0; y < map[x].size(); y++){
+      Coord cartesian = {x - origin.first, origin.second - y};
+      float r = sqrt(pow(cartesian.first, 2) + pow(cartesian.second, 2));
+      float theta = atan2(cartesian.second, cartesian.first);
+      Coord polar = {r, theta};
+      map[x][y] = polar;
+    }
+  }
+
+  const float p_mid = src.cols / 2.0;
+  const float d_theta = M_PI / src.rows;
+  int max = 0;
+  for (int i = 0; i < src.rows; i++){
+    for (int y = 0; y < map.size(); y++){
+      for (int x = 0; x < map[0].size(); x++){
+        float theta = map[x][y].second;
+        float r = map[x][y].first;
+        theta += d_theta * i;
+        Coord cartesian = {round(r * cos(theta) + p_mid), round(-r * sin(theta) + p_mid)};
+        if (cartesian.first > src.cols - 1 || cartesian.second > src.cols - 1 || cartesian.second < 0
+            || cartesian.first < 0)
+          continue;
+        dst.at<double>(cartesian.second,cartesian.first) += copy.at<double>(i,x);
+      }
+    }
+  }
+
+  dst = dst(Rect(p_mid - size.width/2, p_mid - size.height/2, size.width, size.height));
+  radon_normalize(dst, src.type());
+  return dst;
 }
 
-int cv::reconstruct(const std::vector<cv::Mat> src, cv::Mat dst){
-
+void cv::radon_normalize(cv::Mat& src, const int type, bool sc){
+  double min, max;
+  cv::minMaxLoc(src, &min, &max);
+  if (sc)
+    src = src / max;
+  double scale = 1;
+  bool offset = false;
+  switch(type){
+    case CV_8U : {
+      scale = 255;
+      break;
+    }
+    case CV_8S : {
+      scale = 127;
+      offset = true;
+      break;
+    }
+    case CV_16U : {
+      scale = pow(256, 2) - 1;
+      break;
+    }
+    case CV_16S : {
+      scale = pow(256, 2) / 2 - 1;
+      offset = true;
+      break;
+    }
+    case CV_32S : {
+      scale = pow(256, 4) / 2 - 1;
+      offset = true;
+      break;
+    }
+    case CV_USRTYPE1 : {
+      std::cout << "radon-tf does't support user type scaling." << std::endl;
+      break;
+    }
+  }
+  src = src * scale - offset;
+  if (offset)
+    src = src - offset;
+  src.convertTo(src, type);
 }
