@@ -22,11 +22,11 @@ int main(int argc, char** argv){
   std::cout << "Radon transform with " << n_threads << " threads took "
     << fp_ms.count() << " ms" << std::endl;
 
-  cv::Mat recon = cv::reconstruct(rad, cv::Size(img.cols, img.rows));
+  cv::Mat recon = cv::reconstruct(rad, cv::Size(img.cols, img.rows), n_threads);
 
   // cv::Mat compare(img.rows * 2, img.cols * 2, img.type());
   // cv::hconcat(img, rad, compare);
-  //
+
   cv::namedWindow("Sinogram", cv::WINDOW_NORMAL);
   cv::imshow("Sinogram", recon);
   cv::waitKey(0);
