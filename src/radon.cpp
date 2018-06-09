@@ -63,44 +63,7 @@ cv::Mat cv::sinogram(const cv::Mat& src, const int theta_bin, const int n_thread
     it->join();
   }
 
-  double min, max;
-  cv::minMaxLoc(dst, &min, &max);
-  dst = dst/max;
-  double scale = 1;
-  bool offset = false;
-  switch(src.type()){
-    case CV_8U : {
-      scale = 255;
-      break;
-    }
-    case CV_8S : {
-      scale = 127;
-      offset = true;
-      break;
-    }
-    case CV_16U : {
-      scale = pow(256, 2) - 1;
-      break;
-    }
-    case CV_16S : {
-      scale = pow(256, 2) / 2 - 1;
-      offset = true;
-      break;
-    }
-    case CV_32S : {
-      scale = pow(256, 4) / 2 - 1;
-      offset = true;
-      break;
-    }
-    case CV_USRTYPE1 : {
-      std::cout << "radon-tf does't support user type scaling." << std::endl;
-      break;
-    }
-  }
-  dst = dst * scale - offset;
-  if (offset)
-    dst = dst - offset;
-  dst.convertTo(dst, src.type());
+  radon_normalize(dst, src.type());
   return dst;
 }
 
