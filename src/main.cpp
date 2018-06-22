@@ -4,6 +4,7 @@
 #include <chrono>
 
 int main(int argc, char** argv){
+  std::cout << "OpenCV version : " << CV_VERSION << std::endl;
   std::cout << "Radon transform test program" << std::endl;
   if (argc != 3){
     std::cout << "Please provide the image filename and number of threads (exiting)" << std::endl;
