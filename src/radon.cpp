@@ -182,6 +182,6 @@ void cv::radon_normalize(cv::Mat& src, const int type, bool sc){
   }
   src = src * scale;
   if (offset)
-    src = src - offset;
+    src = src - scale/2;
   src.convertTo(src, type);
 }
