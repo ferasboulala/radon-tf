@@ -1,18 +1,29 @@
 cmake_minimum_required(VERSION 3.0)
 project(radon-tf LANGUAGES CXX)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-find_package(Threads)
-find_package(Eigen3)
+set(CMAKE_C_COMPILER "gcc-11")
+set(CMAKE_CXX_COMPILER "g++-11")
+set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(ALL_LIBRARIES)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
+
+add_compile_options(
+  -Ofast
+  -march=native
+  -Wall
+  -Wpedantic
+  -Werror
+  -std=c++2a
+  -std=gnu++2a
+  -fverbose-asm
+  -save-temps
+)
+
+find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED)
 
-add_executable(main
-  src/main.cpp src/radon.cpp
-)
+include_directories(${CMAKE_SOURCE_DIR})
 
-target_include_directories(main PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
-
-target_link_libraries(main ${OpenCV_LIBS} -pthread)
+add_subdirectory(app)
+add_subdirectory(benchmarks)

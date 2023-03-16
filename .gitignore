@@ -1,0 +1,5 @@
+bin
+build
+.*sw*
+.vscode
+perf.*
