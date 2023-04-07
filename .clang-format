@@ -1,0 +1,8 @@
+BasedOnStyle: Google
+IndentWidth: 4
+ColumnLimit: 100
+AccessModifierOffset: -4
+
+BinPackArguments: false
+BinPackParameters: false
+AlignConsecutiveDeclarations: true
